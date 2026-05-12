@@ -6,10 +6,12 @@
 # Passing `deploy` pushes the generated site to the `gh-pages` branch.
 # Passing `--temp` clones upstream docs into a temporary directory.
 
+using Base64
 using MultiDocumenter
 
 const SITE_DOMAIN = "https://alldocs.quantumsavory.org"
 const CUSTOM_DOMAIN = "alldocs.quantumsavory.org"
+const DEPLOY_REPO = "git@github.com:QuantumSavory/multidoc.git"
 
 const REPOSITORIES = [
     (; name = "QuantumSavory", path = "quantumsavory", repo = "QuantumSavory.jl"),
@@ -56,6 +58,43 @@ function build()
     return outpath
 end
 
+function decode_documenter_key(key::AbstractString)
+    try
+        return String(base64decode(key))
+    catch
+        return key
+    end
+end
+
+function documenter_ssh_command()
+    key = strip(get(ENV, "DOCUMENTER_KEY", ""))
+    isempty(key) && return nothing
+
+    sshdir = joinpath(homedir(), ".ssh")
+    mkpath(sshdir)
+
+    keyfile = joinpath(sshdir, "documenter_multidoc_key")
+    write(keyfile, decode_documenter_key(key))
+    chmod(keyfile, 0o600)
+
+    known_hosts = joinpath(sshdir, "known_hosts")
+    hosts = read(`ssh-keyscan github.com`, String)
+    open(known_hosts, "a") do io
+        write(io, hosts)
+    end
+    chmod(known_hosts, 0o600)
+
+    return "ssh -i $(keyfile) -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+end
+
+function push_docs(gitroot, remote, outbranch, has_outbranch)
+    if has_outbranch
+        run(`git -C $gitroot push $remote $outbranch`)
+    else
+        run(`git -C $gitroot push -u $remote $outbranch`)
+    end
+end
+
 function deploy(outpath)
     @warn "Deploying generated documentation to gh-pages"
 
@@ -85,10 +124,13 @@ function deploy(outpath)
     run(`git -C $gitroot add .`)
     if success(`git -C $gitroot commit -m "Aggregate documentation"`)
         @info "Pushing updated documentation."
-        if has_outbranch
-            run(`git -C $gitroot push origin $outbranch`)
+        ssh_command = documenter_ssh_command()
+        if isnothing(ssh_command)
+            push_docs(gitroot, "origin", outbranch, has_outbranch)
         else
-            run(`git -C $gitroot push -u origin $outbranch`)
+            withenv("GIT_SSH_COMMAND" => ssh_command) do
+                push_docs(gitroot, DEPLOY_REPO, outbranch, has_outbranch)
+            end
         end
     else
         @info "No changes to aggregated documentation."

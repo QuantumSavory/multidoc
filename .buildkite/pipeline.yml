@@ -3,6 +3,7 @@ env:
 
 steps:
   - label: "Aggregate Docs"
+    if: build.branch != "main"
     plugins:
       - JuliaCI/julia#v1:
           version: "1.11"
@@ -11,3 +12,14 @@ steps:
       julia --project=docs -e 'using Pkg; Pkg.instantiate()'
       julia -tauto --project=docs docs/make.jl --temp
 
+  - label: "Deploy Docs"
+    if: build.branch == "main"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1.11"
+      - QuantumSavory/julia-xvfb#v1:
+    secrets:
+      DOCUMENTER_KEY: DOCUMENTER_KEY_multidoc
+    command: |
+      julia --project=docs -e 'using Pkg; Pkg.instantiate()'
+      julia -tauto --project=docs docs/make.jl --temp deploy

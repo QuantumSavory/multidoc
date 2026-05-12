@@ -23,8 +23,6 @@ into a temporary directory instead of `docs/clones`:
 julia --project=docs docs/make.jl --temp
 ```
 
-Pushing to `main`, running the workflow manually, or waiting for the scheduled
-workflow rebuilds the aggregate docs and pushes them to `gh-pages`.
-
-Buildkite runs the same aggregate docs build without deployment through
-`.buildkite/pipeline.yml`.
+Buildkite runs the aggregate docs build through `.buildkite/pipeline.yml`.
+Builds on `main` deploy the generated site to `gh-pages`; builds on other
+branches only validate the aggregate docs.
