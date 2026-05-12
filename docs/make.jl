@@ -63,9 +63,11 @@ function deploy(outpath)
     outbranch = "gh-pages"
     source_branch = readchomp(`git -C $gitroot branch --show-current`)
 
-    has_outbranch = true
-    if !success(`git -C $gitroot checkout $outbranch`)
-        has_outbranch = false
+    has_outbranch = success(`git -C $gitroot ls-remote --exit-code --heads origin $outbranch`)
+    if has_outbranch
+        run(`git -C $gitroot fetch origin $outbranch`)
+        run(`git -C $gitroot checkout -B $outbranch FETCH_HEAD`)
+    else
         if !success(`git -C $gitroot switch --orphan $outbranch`)
             error("Cannot create new orphaned branch $outbranch.")
         end
