@@ -1,0 +1,48 @@
+name: Aggregate documentation
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aggregate-documentation
+  cancel-in-progress: true
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1.11'
+
+      - uses: actions/cache@v5
+        env:
+          cache-name: julia-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('docs/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-
+
+      - name: Install dependencies
+        run: julia --project=docs -e 'using Pkg; Pkg.instantiate()'
+
+      - name: Aggregate and deploy
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          julia --project=docs docs/make.jl deploy
+

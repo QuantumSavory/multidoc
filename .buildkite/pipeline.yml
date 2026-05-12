@@ -1,0 +1,13 @@
+env:
+  JULIA_NUM_THREADS: auto
+
+steps:
+  - label: "Aggregate Docs"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1.11"
+      - QuantumSavory/julia-xvfb#v1:
+    command: |
+      julia --project=docs -e 'using Pkg; Pkg.instantiate()'
+      julia -tauto --project=docs docs/make.jl --temp
+
