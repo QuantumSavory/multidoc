@@ -13,18 +13,20 @@ const SITE_DOMAIN = "https://alldocs.quantumsavory.org"
 const CUSTOM_DOMAIN = "alldocs.quantumsavory.org"
 const DEPLOY_REPO = "git@github.com:QuantumSavory/multidoc.git"
 
-const REPOSITORIES = [
-    (; name = "QuantumSavory", path = "quantumsavory", repo = "QuantumSavory.jl"),
-    (; name = "QuantumClifford", path = "quantumclifford", repo = "QuantumClifford.jl"),
-    (; name = "QuantumSymbolics", path = "quantumsymbolics", repo = "QuantumSymbolics.jl"),
+const PACKAGES = [
+    (; name = "QuantumSavory", owner = "QuantumSavory"),
+    (; name = "QuantumClifford", owner = "QuantumSavory"),
+    (; name = "Gabs", owner = "QuantumSavory"),
+    (; name = "QuantumOptics", owner = "qojulia"),
+    (; name = "QuantumSymbolics", owner = "QuantumSavory"),
 ]
 
 function docref(clonedir, spec)
     return MultiDocumenter.MultiDocRef(
         upstream = joinpath(clonedir, spec.name),
-        path = spec.path,
+        path = lowercase(spec.name),
         name = spec.name,
-        giturl = "https://github.com/QuantumSavory/$(spec.repo).git",
+        giturl = "https://github.com/$(spec.owner)/$(spec.name).jl.git",
         branch = "gh-pages",
     )
 end
@@ -38,7 +40,7 @@ function build()
     Building aggregate site into: $(outpath)
     """
 
-    docs = [docref(clonedir, spec) for spec in REPOSITORIES]
+    docs = [docref(clonedir, spec) for spec in PACKAGES]
 
     MultiDocumenter.make(
         outpath,
