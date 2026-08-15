@@ -1,12 +1,14 @@
 # QuantumSavory aggregated documentation
 
-This repository builds the MultiDocumenter.jl site for the QuantumSavory GitHub
-organization at <https://alldocs.quantumsavory.org>.
+This repository builds the MultiDocumenter.jl site for the QuantumSavory
+ecosystem at <https://alldocs.quantumsavory.org>.
 
-Included documentation sets:
+Included documentation pages, in navigation order:
 
 - QuantumSavory
 - QuantumClifford
+- Gabs
+- QuantumOptics
 - QuantumSymbolics
 
 Build locally with:
