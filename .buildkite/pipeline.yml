@@ -22,4 +22,6 @@ steps:
       DOCUMENTER_KEY: DOCUMENTER_KEY_multidoc
     command: |
       julia --project=docs -e 'using Pkg; Pkg.instantiate()'
+      git config user.name "QuantumSavory Buildkite"
+      git config user.email "buildkite@quantumsavory.org"
       julia -tauto --project=docs docs/make.jl --temp deploy
