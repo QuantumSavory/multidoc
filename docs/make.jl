@@ -123,8 +123,13 @@ function deploy(outpath)
         cp(joinpath(outpath, file), joinpath(gitroot, file); force = true)
     end
 
-    run(`git -C $gitroot add .`)
-    if success(`git -C $gitroot commit -m "Aggregate documentation"`)
+    run(`git -C $gitroot add --all`)
+    staged_diff = run(ignorestatus(`git -C $gitroot diff --cached --quiet --`))
+
+    if staged_diff.exitcode == 0
+        @info "No changes to aggregated documentation."
+    elseif staged_diff.exitcode == 1
+        run(`git -C $gitroot commit -m "Aggregate documentation"`)
         @info "Pushing updated documentation."
         ssh_command = documenter_ssh_command()
         if isnothing(ssh_command)
@@ -135,7 +140,7 @@ function deploy(outpath)
             end
         end
     else
-        @info "No changes to aggregated documentation."
+        error("Cannot inspect staged documentation changes (git diff exited $(staged_diff.exitcode)).")
     end
 
     if !isempty(source_branch) && source_branch != outbranch
